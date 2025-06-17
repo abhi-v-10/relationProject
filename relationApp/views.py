@@ -1,7 +1,12 @@
 
 from django.shortcuts import render, redirect
 from django.db import IntegrityError
-from .models import Doctor, Patient, Course, Student, Employee, IDCard
+from .models import *
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import DoctorSerializer, PatientSerializer, CourseSerializer, StudentSerializer, EmployeeSerializer, IDCardSerializer
+
 
 def home(request):
     return render(request, "home.html")
@@ -97,3 +102,126 @@ def view_courses_students(request):
 def view_employees_idcards(request):
     employees = Employee.objects.select_related('idcard')
     return render(request, "employee_idcards.html", {"employees": employees})
+
+
+@api_view(['GET', 'POST'])
+def api_doctors(request):
+    if request.method == 'GET':
+        doctors = Doctor.objects.all()
+        serializer = DoctorSerializer(doctors, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = DoctorSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST'])
+def api_patients(request):
+    if request.method == 'GET':
+        patients = Patient.objects.all()
+        serializer = PatientSerializer(patients, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = PatientSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST'])
+def api_courses(request):
+    if request.method == 'GET':
+        courses = Course.objects.all()
+        serializer = CourseSerializer(courses, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = CourseSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST'])
+def api_students(request):
+    if request.method == 'GET':
+        students = Student.objects.all()
+        serializer = StudentSerializer(students, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = StudentSerializer(data=request.data)
+        if serializer.is_valid():
+            student = serializer.save()
+            if 'courses' in request.data:
+                student.courses.set(request.data['courses'])
+            return Response(StudentSerializer(student).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST'])
+def api_employees(request):
+    if request.method == 'GET':
+        employees = Employee.objects.all()
+        serializer = EmployeeSerializer(employees, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = EmployeeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST'])
+def api_idcards(request):
+    if request.method == 'GET':
+        idcards = IDCard.objects.all()
+        serializer = IDCardSerializer(idcards, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = IDCardSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['GET'])
+def api_employees_with_idcards(request):
+    employees = Employee.objects.select_related('idcard')
+    data = []
+
+    for emp in employees:
+        try:
+            idcard = emp.idcard
+            idcard_data = IDCardSerializer(idcard).data
+        except IDCard.DoesNotExist:
+            idcard_data = None
+
+        data.append({
+            "employee": EmployeeSerializer(emp).data,
+            "idcard": idcard_data
+        })
+
+    return Response(data)
+
+
+@api_view(['GET'])
+def api_doctors_with_patients(request):
+    data = []
+    for doctor in Doctor.objects.prefetch_related('patient_set'):
+        data.append({
+            'doctor': DoctorSerializer(doctor).data,
+            'patients': PatientSerializer(doctor.patient_set.all(), many=True).data
+        })
+    return Response(data)
+
+@api_view(['GET'])
+def api_courses_with_students(request):
+    data = []
+    for course in Course.objects.prefetch_related('student_set'):
+        data.append({
+            'course': CourseSerializer(course).data,
+            'students': StudentSerializer(course.student_set.all(), many=True).data
+        })
+    return Response(data)
+
+

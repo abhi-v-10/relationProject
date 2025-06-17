@@ -15,4 +15,15 @@ urlpatterns = [
     path('view-courses-students/', views.view_courses_students, name='view_courses_students'),
     path('view-employees-idcards/', views.view_employees_idcards, name='view_employees_idcards'),
 
+    path('api_doctors/', views.api_doctors, name='api_doctors'),
+    path('api_patients/', views.api_patients, name='api_patients'),
+    path('api_courses/', views.api_courses, name='api_courses'),
+    path('api_students/', views.api_students, name='api_students'),
+    path('api_employees/', views.api_employees, name='api_employees'),
+    path('api_idcards/', views.api_idcards, name='api_idcards'),
+
+    path('api_doctors-patients/', views.api_doctors_with_patients, name='api_doctors_patients'),
+    path('api_courses-students/', views.api_courses_with_students, name='api_courses_students'),
+    path('api_employees-idcards/', views.api_employees_with_idcards, name='api_employees_idcards'),
+
 ]
