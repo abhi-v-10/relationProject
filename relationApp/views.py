@@ -13,7 +13,7 @@ def create_doctor(request):
         name = request.POST.get("name")
         try:
             Doctor.objects.create(name=name)
-            return redirect("create_doctor")
+            return redirect("home")
         except IntegrityError:
             error = "Doctor with this name already exists."
     return render(request, "create_doctor.html", {"error": error})
@@ -25,9 +25,8 @@ def create_patient(request):
         name = request.POST.get("name")
         doctor_id = request.POST.get("doctor")
         try:
-            doctor = Doctor.objects.get(id=doctor_id)
-            Patient.objects.create(name=name, doctor=doctor)
-            return redirect("create_patient")
+            Patient.objects.create(name=name, doctor_id=doctor_id)
+            return redirect("home")
         except Doctor.DoesNotExist:
             error = "Selected doctor does not exist."
         except IntegrityError:
@@ -40,7 +39,7 @@ def create_course(request):
         name = request.POST.get("name")
         try:
             Course.objects.create(name=name)
-            return redirect("create_course")
+            return redirect("home")
         except IntegrityError:
             error = "Course with this name already exists."
     return render(request, "create_course.html", {"error": error})
@@ -54,7 +53,7 @@ def create_student(request):
         try:
             student = Student.objects.create(name=name)
             student.courses.set(selected_courses)
-            return redirect("create_student")
+            return redirect("home")
         except IntegrityError:
             error = "Error while creating student."
     return render(request, "create_student.html", {"courses": courses, "error": error})
@@ -65,7 +64,7 @@ def create_employee(request):
         name = request.POST.get("name")
         try:
             Employee.objects.create(name=name)
-            return redirect("create_employee")
+            return redirect("home")
         except IntegrityError:
             error = "Employee with this name already exists."
     return render(request, "create_employee.html", {"error": error})
@@ -77,11 +76,24 @@ def create_idcard(request):
         employee_id = request.POST.get("employee")
         id_number = request.POST.get("id_number")
         try:
-            employee = Employee.objects.get(id=employee_id)
-            IDCard.objects.create(employee=employee, id_number=id_number)
-            return redirect("create_idcard")
+
+            IDCard.objects.create(employee_id=employee_id, id_number=id_number)
+            return redirect("home")
         except Employee.DoesNotExist:
             error = "Selected employee does not exist."
         except IntegrityError:
             error = "ID card for this employee already exists."
     return render(request, "create_id.html", {"employees": employees, "error": error})
+
+
+def view_doctors_patients(request):
+    doctors = Doctor.objects.prefetch_related('patient_set')
+    return render(request, "doctor_patient.html", {"doctors": doctors})
+
+def view_courses_students(request):
+    students = Student.objects.prefetch_related('courses')
+    return render(request, "course_students.html", {"students": students})
+
+def view_employees_idcards(request):
+    employees = Employee.objects.select_related('idcard')
+    return render(request, "employee_idcards.html", {"employees": employees})
